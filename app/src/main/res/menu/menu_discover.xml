@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".MyActivity" >
+
+    <item android:id="@+id/action_discover"
+        android:title="@string/action_discover"
+        android:icon="@drawable/ic_discover"
+        android:orderInCategory="100"
+        android:showAsAction="ifRoom|withText" />
+
+    <item android:id="@+id/action_settings"
+        android:title="@string/action_settings"
+        android:icon="@drawable/ic_settings"
+        android:orderInCategory="100"
+        android:showAsAction="ifRoom|withText" />
+
+</menu>

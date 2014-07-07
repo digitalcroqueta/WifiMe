@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name= "text_menu">#33B5E5</color>
+    <color name="white">#FFFFFF</color>
+    <color name="username_menu">#8E8E8E</color>
+    <color name="button_menu1">#33B5E5</color>
+    <color name="button_menu2">#0099CC</color>
+
+</resources>
