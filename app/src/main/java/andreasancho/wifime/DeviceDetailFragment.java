@@ -4,6 +4,7 @@ package andreasancho.wifime;
  * Created by andrea on 7/6/14.
  */
 
+import android.app.Activity;
 import android.app.Fragment;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -101,17 +102,24 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         // User has picked an image. Transfer it to group owner i.e peer using
         // FileTransferService.
-        Uri uri = data.getData();
-        TextView statusText = (TextView) mContentView.findViewById(R.id.status_text);
-        statusText.setText("Sending: " + uri);
-        Log.d(Discover.TAG, "Intent----------- " + uri);
-        Intent serviceIntent = new Intent(getActivity(), FileTransferService.class);
-        serviceIntent.setAction(FileTransferService.ACTION_SEND_FILE);
-        serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_PATH, uri.toString());
-        serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS,
-                info.groupOwnerAddress.getHostAddress());
-        serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT, 8988);
-        getActivity().startService(serviceIntent);
+        if (requestCode == CHOOSE_FILE_RESULT_CODE){
+            if(resultCode == Activity.RESULT_OK) {
+                Uri uri = data.getData();
+                TextView statusText = (TextView) mContentView.findViewById(R.id.status_text);
+                statusText.setText("Sending: " + uri);
+                Log.d(Discover.TAG, "Intent----------- " + uri);
+                Intent serviceIntent = new Intent(getActivity(), FileTransferService.class);
+                serviceIntent.setAction(FileTransferService.ACTION_SEND_FILE);
+                serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_PATH, uri.toString());
+                serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS,
+                        info.groupOwnerAddress.getHostAddress());
+                serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT, 8988);
+                getActivity().startService(serviceIntent);
+            }
+        }
+        else {
+            Log.d(Discover.TAG, "there was a problem picking the image for its transfer");
+        }
     }
 
     @Override
@@ -125,7 +133,7 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
         // The owner IP is now known.
         TextView view = (TextView) mContentView.findViewById(R.id.group_owner);
         view.setText(getResources().getString(R.string.group_owner_text)
-                + ((info.isGroupOwner == true) ? getResources().getString(R.string.yes)
+                + ((info.isGroupOwner) ? getResources().getString(R.string.yes)
                 : getResources().getString(R.string.no)));
 
         // InetAddress from WifiP2pInfo struct.
@@ -208,7 +216,6 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
                 Socket client = serverSocket.accept();
                 Log.d(Discover.TAG, "Server: connection done");
                 final File f = new File(Environment.getExternalStorageDirectory().toString()+"/");
-
                 File dirs = new File(f.getParent());
                 if (!dirs.exists()) {
                     dirs.mkdirs();
@@ -233,10 +240,10 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
         protected void onPostExecute(String result) {
             if (result != null) {
                 statusText.setText("File copied - " + result);
-                Intent intent = new Intent();
+                /*Intent intent = new Intent();
                 intent.setAction(android.content.Intent.ACTION_VIEW);
-                intent.setDataAndType(Uri.parse("file://" + result), "image/*");
-                context.startActivity(intent);
+                intent.setDataAndType(Uri.parse("file://" + result), "image*//*");
+                context.startActivity(intent);*/
             }
         }
 
@@ -267,6 +274,11 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
         return true;
     }
 
+    /* Checks if external storage is available for read and write */
+    public boolean isExternalStorageWritable() {
+        String state = Environment.getExternalStorageState();
+        return Environment.MEDIA_MOUNTED.equals(state);
+    }
 }
 
 

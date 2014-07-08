@@ -13,14 +13,14 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
         <fragment
-            class="com.andrea.wifime.DeviceListFragment"
+            class="andreasancho.wifime.DeviceListFragment"
             android:id="@+id/frag_list"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <!-- Preview: layout=@layout/row_devices -->
         </fragment>
         <fragment
-            class="com.andrea.wifime.DeviceDetailFragment"
+            class="andreasancho.wifime.DeviceDetailFragment"
             android:id="@+id/frag_detail"
             android:layout_width="match_parent"
             android:layout_height="match_parent">

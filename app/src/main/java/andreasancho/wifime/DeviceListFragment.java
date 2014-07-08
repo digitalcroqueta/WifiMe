@@ -1,4 +1,5 @@
 package andreasancho.wifime;
+
 import android.app.ListFragment;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -81,11 +82,6 @@ public class DeviceListFragment extends ListFragment implements PeerListListener
 
         private List<WifiP2pDevice> items;
 
-        /**
-         * @param context
-         * @param textViewResourceId
-         * @param objects
-         */
         public WiFiPeerListAdapter(Context context, int textViewResourceId,
                                    List<WifiP2pDevice> objects) {
             super(context, textViewResourceId, objects);
@@ -138,7 +134,6 @@ public class DeviceListFragment extends ListFragment implements PeerListListener
         ((WiFiPeerListAdapter) getListAdapter()).notifyDataSetChanged();
         if (peers.size() == 0) {
             Log.d(Discover.TAG, "No devices found");
-            return;
         }
 
     }
