@@ -40,6 +40,9 @@
             </intent-filter>
         </activity>
         <activity android:name=".Discover"/>
+        <service
+            android:name=".FileTransferService"
+            android:enabled="true" />
     </application>
 
 </manifest>

@@ -102,6 +102,9 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         // User has picked an image. Transfer it to group owner i.e peer using
         // FileTransferService.
+        Log.d(Discover.TAG, "I'm the client, after picking a file");
+        Log.d(Discover.TAG, "Result in requestCode (should be 20): " + requestCode);
+        Log.d(Discover.TAG, "Result in resultCode (should be -1): " + resultCode);
         if (requestCode == CHOOSE_FILE_RESULT_CODE){
             if(resultCode == Activity.RESULT_OK) {
                 Uri uri = data.getData();
@@ -154,7 +157,7 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
                     .getString(R.string.client_text));
         }
 
-        // hide the connect button
+        // hide the connect button after the connection has been established
         mContentView.findViewById(R.id.btn_connect).setVisibility(View.GONE);
     }
 
