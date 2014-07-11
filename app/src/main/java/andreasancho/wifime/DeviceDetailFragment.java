@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -108,12 +109,13 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
         if (requestCode == CHOOSE_FILE_RESULT_CODE){
             if(resultCode == Activity.RESULT_OK) {
                 Uri uri = data.getData();
+                String dataPath = data.getDataString();
                 TextView statusText = (TextView) mContentView.findViewById(R.id.status_text);
                 statusText.setText("Sending: " + uri);
                 Log.d(Discover.TAG, "Intent----------- " + uri);
                 Intent serviceIntent = new Intent(getActivity(), FileTransferService.class);
                 serviceIntent.setAction(FileTransferService.ACTION_SEND_FILE);
-                serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_PATH, uri.toString());
+                serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_PATH, dataPath);
                 serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_ADDRESS,
                         info.groupOwnerAddress.getHostAddress());
                 serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT, 8988);
@@ -218,15 +220,20 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
                 Log.d(Discover.TAG, "Server: Socket opened");
                 Socket client = serverSocket.accept();
                 Log.d(Discover.TAG, "Server: connection done");
-                final File f = new File(Environment.getExternalStorageDirectory().toString()+"/");
+                final File f = new File(Environment.getExternalStorageDirectory().toString()+"/wifime-" + System.currentTimeMillis());
                 File dirs = new File(f.getParent());
                 if (!dirs.exists()) {
                     dirs.mkdirs();
+                    Log.d(Discover.TAG, "Dir didn't exist, now:" + dirs.toString());
+                }else{
+                    Log.d(Discover.TAG, "Dir exist" + dirs.toString());
                 }
-                f.createNewFile();
-                Log.d(Discover.TAG, "server: copying files " + f.toString());
+                //f.createNewFile();
+                boolean create = f.createNewFile();
+                Log.d(Discover.TAG, "Create New File = " + create);
+                Log.d(Discover.TAG, "Server: copying files " + f.toString());
                 InputStream inputstream = client.getInputStream();
-                copyFile(inputstream, new FileOutputStream(f));
+                saveFile(inputstream, new FileOutputStream(f));
                 serverSocket.close();
                 return f.getAbsolutePath();
             } catch (IOException e) {
@@ -261,7 +268,7 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
 
     }
 
-    public static boolean copyFile(InputStream inputStream, FileOutputStream out) {
+    public static boolean copyFile(InputStream inputStream, OutputStream out) {
         byte buf[] = new byte[1024];
         int len;
         try {
@@ -276,6 +283,23 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
         }
         return true;
     }
+
+    public static boolean saveFile(InputStream inputStream, FileOutputStream out) {
+        byte buf[] = new byte[1024];
+        int len;
+        try {
+            while ((len = inputStream.read(buf)) != -1) {
+                out.write(buf, 0, len);
+            }
+            out.close();
+            inputStream.close();
+        } catch (IOException e) {
+            Log.d(Discover.TAG, e.toString());
+            return false;
+        }
+        return true;
+    }
+
 
     /* Checks if external storage is available for read and write */
     public boolean isExternalStorageWritable() {
