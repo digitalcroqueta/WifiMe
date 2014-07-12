@@ -24,6 +24,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -103,9 +104,6 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         // User has picked an image. Transfer it to group owner i.e peer using
         // FileTransferService.
-        Log.d(Discover.TAG, "I'm the client, after picking a file");
-        Log.d(Discover.TAG, "Result in requestCode (should be 20): " + requestCode);
-        Log.d(Discover.TAG, "Result in resultCode (should be -1): " + resultCode);
         if (requestCode == CHOOSE_FILE_RESULT_CODE){
             if(resultCode == Activity.RESULT_OK) {
                 Uri uri = data.getData();
@@ -123,7 +121,7 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
             }
         }
         else {
-            Log.d(Discover.TAG, "there was a problem picking the image for its transfer");
+            Log.d(Discover.TAG, "there was a problem picking the file");
         }
     }
 
@@ -149,6 +147,10 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
         // server. The file server is single threaded, single connection server
         // socket.
         if (info.groupFormed && info.isGroupOwner) {
+            if(!isExternalStorageWritable()) {
+                Toast.makeText(getActivity(), R.string.external_storage,
+                        Toast.LENGTH_SHORT).show();
+            }
             new FileServerAsyncTask(getActivity(), mContentView.findViewById(R.id.status_text))
                     .execute();
         } else if (info.groupFormed) {
@@ -220,18 +222,13 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
                 Log.d(Discover.TAG, "Server: Socket opened");
                 Socket client = serverSocket.accept();
                 Log.d(Discover.TAG, "Server: connection done");
-                final File f = new File(Environment.getExternalStorageDirectory().toString()+"/wifime-" + System.currentTimeMillis());
+                final File f = new File(Environment.getExternalStorageDirectory().toString()+"/wifime/" + System.currentTimeMillis());
                 File dirs = new File(f.getParent());
                 if (!dirs.exists()) {
                     dirs.mkdirs();
-                    Log.d(Discover.TAG, "Dir didn't exist, now:" + dirs.toString());
-                }else{
-                    Log.d(Discover.TAG, "Dir exist" + dirs.toString());
                 }
-                //f.createNewFile();
                 boolean create = f.createNewFile();
-                Log.d(Discover.TAG, "Create New File = " + create);
-                Log.d(Discover.TAG, "Server: copying files " + f.toString());
+                Log.d(Discover.TAG, "Create New File = " + create + "Server: copying files " + f.toString());
                 InputStream inputstream = client.getInputStream();
                 saveFile(inputstream, new FileOutputStream(f));
                 serverSocket.close();
