@@ -98,11 +98,13 @@ public class DeviceListFragment extends ListFragment implements PeerListListener
                 v = vi.inflate(R.layout.row_devices, null);
             }
             WifiP2pDevice device = items.get(position);
+            //WifiMeDevice device = new WifiMeDevice(d, Discover.my_user_name);
             if (device != null) {
                 TextView top = (TextView) v.findViewById(R.id.device_name);
                 TextView bottom = (TextView) v.findViewById(R.id.device_details);
                 if (top != null) {
                     top.setText(device.deviceName);
+                    //top.setText(Discover.my_user_name);
                 }
                 if (bottom != null) {
                     bottom.setText(getDeviceStatus(device.status));

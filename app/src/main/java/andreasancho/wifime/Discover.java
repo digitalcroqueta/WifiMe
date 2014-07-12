@@ -31,7 +31,7 @@ public class Discover  extends Activity implements ChannelListener, DeviceListFr
     private final IntentFilter intentFilter = new IntentFilter();
     private WifiP2pManager.Channel mChannel;
     private BroadcastReceiver receiver = null;
-    public String my_user_name;
+    public static String my_user_name;
     private boolean retryChannel = false;
 
 
@@ -49,7 +49,7 @@ public class Discover  extends Activity implements ChannelListener, DeviceListFr
 
         // Get the message from the intent
         Intent intent = getIntent();
-        my_user_name = intent.getStringExtra(InitialActivity.EXTRA_MESSAGE);
+        this.my_user_name = intent.getStringExtra(InitialActivity.EXTRA_MESSAGE);
         TextView view = (TextView) findViewById(R.id.my_name);
         view.setText(my_user_name);
 
