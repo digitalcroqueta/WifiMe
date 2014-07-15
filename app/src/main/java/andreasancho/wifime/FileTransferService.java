@@ -11,6 +11,10 @@ import android.content.Intent;
 import android.net.Uri;
 import android.util.Log;
 
+import java.io.BufferedOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,9 +49,12 @@ public class FileTransferService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
 
+
         Context context = getApplicationContext();
         if (intent.getAction().equals(ACTION_SEND_FILE)) {
             String fileUri = intent.getExtras().getString(EXTRAS_FILE_PATH);
+            File file = new File(fileUri);
+            Uri u = Uri.fromFile(file);
             String host = intent.getExtras().getString(EXTRAS_GROUP_OWNER_ADDRESS);
             Socket socket = new Socket();
             int port = intent.getExtras().getInt(EXTRAS_GROUP_OWNER_PORT);
@@ -58,15 +65,27 @@ public class FileTransferService extends IntentService {
                 socket.connect((new InetSocketAddress(host, port)), SOCKET_TIMEOUT);
 
                 Log.d(Discover.TAG, "Client socket - " + socket.isConnected());
+
                 OutputStream stream = socket.getOutputStream();
                 ContentResolver cr = context.getContentResolver();
                 InputStream is = null;
                 try {
-                    is = cr.openInputStream(Uri.parse(fileUri));
+                    is = cr.openInputStream(u);
                 } catch (FileNotFoundException e) {
                     Log.d(Discover.TAG, e.toString());
+                    Log.d(Discover.TAG, "problem opening cr");
                 }
-                DeviceDetailFragment.copyFile(is, stream);
+                DataInputStream in = new DataInputStream(is);
+                BufferedOutputStream out = new BufferedOutputStream(stream);
+                DataOutputStream d = new DataOutputStream(out);
+                Log.d(Discover.TAG, "File Uri: " + fileUri);
+                String fileName = file.getName();
+                Log.d(Discover.TAG, "File name: " + fileName);
+                String filenameArray[] = fileName.split("\\.");
+                String extension = filenameArray[filenameArray.length-1];
+                Log.d(Discover.TAG, "File type: " + extension);
+                d.writeUTF(fileName);
+                DeviceDetailFragment.copyFile(in, d);
                 Log.d(Discover.TAG, "Client: Data written");
             } catch (IOException e) {
                 Log.e(Discover.TAG, e.getMessage());

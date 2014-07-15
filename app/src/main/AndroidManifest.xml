@@ -25,6 +25,9 @@
     <uses-permission
         android:required="true"
         android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission
+        android:required="true"
+        android:name="android.permission.MANAGE_DOCUMENTS"/>
 
     <application
         android:allowBackup="true"

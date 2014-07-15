@@ -35,6 +35,7 @@ public class Discover  extends Activity implements ChannelListener, DeviceListFr
     private boolean retryChannel = false;
 
 
+
     /**
      * @param isWifiP2pEnabled the isWifiP2pEnabled to set
      */
@@ -50,8 +51,7 @@ public class Discover  extends Activity implements ChannelListener, DeviceListFr
         // Get the message from the intent
         Intent intent = getIntent();
         this.my_user_name = intent.getStringExtra(InitialActivity.EXTRA_MESSAGE);
-        TextView view = (TextView) findViewById(R.id.my_name);
-        view.setText(my_user_name);
+
 
         //  Indicates a change in the Wi-Fi P2P status.
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);

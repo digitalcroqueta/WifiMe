@@ -4,12 +4,15 @@ package andreasancho.wifime;
  * Created by andrea on 7/6/14.
  */
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.ProgressDialog;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.net.wifi.WpsInfo;
 import android.net.wifi.p2p.WifiP2pConfig;
@@ -17,8 +20,11 @@ import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.DocumentsContract;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -26,6 +32,9 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.BufferedInputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -45,6 +54,7 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
     private WifiP2pDevice device;
     private WifiP2pInfo info;
     ProgressDialog progressDialog = null;
+
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -90,7 +100,7 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        // Allow user to pick an image from Gallery or other
+                        // Allow user to pick an (image) File from sd or other
                         // registered apps
                         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
                         intent.setType("*/*");
@@ -107,7 +117,8 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
         if (requestCode == CHOOSE_FILE_RESULT_CODE){
             if(resultCode == Activity.RESULT_OK) {
                 Uri uri = data.getData();
-                String dataPath = data.getDataString();
+                String dataPath = getPath(getActivity().getApplicationContext(), uri);
+                Log.d(Discover.TAG, "************  File path = " + dataPath);
                 TextView statusText = (TextView) mContentView.findViewById(R.id.status_text);
                 statusText.setText("Sending: " + uri);
                 Log.d(Discover.TAG, "Intent----------- " + uri);
@@ -222,15 +233,24 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
                 Log.d(Discover.TAG, "Server: Socket opened");
                 Socket client = serverSocket.accept();
                 Log.d(Discover.TAG, "Server: connection done");
-                final File f = new File(Environment.getExternalStorageDirectory().toString()+"/wifime/" + System.currentTimeMillis());
+
+                InputStream inputstream = client.getInputStream();
+                BufferedInputStream in = new BufferedInputStream(inputstream);
+                DataInputStream d = new DataInputStream(in);
+                String fileName = Long.toString(System.currentTimeMillis());
+                Log.d(Discover.TAG, "FileName: " + fileName);
+                final File f = new File(Environment.getExternalStorageDirectory().toString()+"/wifime/" + fileName);
                 File dirs = new File(f.getParent());
                 if (!dirs.exists()) {
                     dirs.mkdirs();
                 }
-                boolean create = f.createNewFile();
-                Log.d(Discover.TAG, "Create New File = " + create + "Server: copying files " + f.toString());
-                InputStream inputstream = client.getInputStream();
-                saveFile(inputstream, new FileOutputStream(f));
+                f.createNewFile();
+                Log.d(Discover.TAG, "Server: copying files " + f.toString());
+                FileOutputStream ou = new FileOutputStream(f);
+                DataOutputStream o = new DataOutputStream(ou);
+                String newName = d.readUTF();
+                copyFile(d, o);
+                f.renameTo(new File(Environment.getExternalStorageDirectory().toString()+"/wifime/"+ newName));
                 serverSocket.close();
                 return f.getAbsolutePath();
             } catch (IOException e) {
@@ -265,7 +285,7 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
 
     }
 
-    public static boolean copyFile(InputStream inputStream, OutputStream out) {
+    public static boolean copyFile(DataInputStream inputStream, DataOutputStream out) {
         byte buf[] = new byte[1024];
         int len;
         try {
@@ -280,29 +300,143 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
         }
         return true;
     }
-
-    public static boolean saveFile(InputStream inputStream, FileOutputStream out) {
-        byte buf[] = new byte[1024];
-        int len;
-        try {
-            while ((len = inputStream.read(buf)) != -1) {
-                out.write(buf, 0, len);
-            }
-            out.close();
-            inputStream.close();
-        } catch (IOException e) {
-            Log.d(Discover.TAG, e.toString());
-            return false;
-        }
-        return true;
-    }
-
 
     /* Checks if external storage is available for read and write */
     public boolean isExternalStorageWritable() {
         String state = Environment.getExternalStorageState();
         return Environment.MEDIA_MOUNTED.equals(state);
     }
-}
 
+    // The following method are part from an external open source library, aFileChooser (author: paulburke)
+    /**
+     * Get a file path from a Uri. This will get the the path for Storage Access
+     * Framework Documents, as well as the _data field for the MediaStore and
+     * other file-based ContentProviders.
+     *
+     * @param context The context.
+     * @param uri The Uri to query.
+     *
+     */
+    @SuppressLint("NewApi")
+    public static String getPath(final Context context, final Uri uri) {
+        // DocumentProvider
+        final boolean isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
+        if (isKitKat && DocumentsContract.isDocumentUri(context, uri)) {
+            // ExternalStorageProvider
+            if (isExternalStorageDocument(uri)) {
+                final String docId = DocumentsContract.getDocumentId(uri);
+                final String[] split = docId.split(":");
+                final String type = split[0];
+
+                if ("primary".equalsIgnoreCase(type)) {
+                    return Environment.getExternalStorageDirectory() + "/" + split[1];
+                }
+                // TODO handle non-primary volumes
+            }
+            // DownloadsProvider
+            else if (isDownloadsDocument(uri)) {
+
+                final String id = DocumentsContract.getDocumentId(uri);
+                final Uri contentUri = ContentUris.withAppendedId(
+                        Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
+
+                return getDataColumn(context, contentUri, null, null);
+            }
+            // MediaProvider
+            else if (isMediaDocument(uri)) {
+                final String docId = DocumentsContract.getDocumentId(uri);
+                final String[] split = docId.split(":");
+                final String type = split[0];
+
+                Uri contentUri = null;
+                if ("image".equals(type)) {
+                    contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+                } else if ("video".equals(type)) {
+                    contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+                } else if ("audio".equals(type)) {
+                    contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+                }
+
+                final String selection = "_id=?";
+                final String[] selectionArgs = new String[] {
+                        split[1]
+                };
+
+                return getDataColumn(context, contentUri, selection, selectionArgs);
+            }
+        }
+        // MediaStore (and general)
+        else if ("content".equalsIgnoreCase(uri.getScheme())) {
+            return getDataColumn(context, uri, null, null);
+        }
+        // File
+        else if ("file".equalsIgnoreCase(uri.getScheme())) {
+            return uri.getPath();
+        }
+
+        return null;
+    }
+
+
+    // The following method are part from an external open source library, aFileChooser
+    /**
+     * Get the value of the data column for this Uri. This is useful for
+     * MediaStore Uris, and other file-based ContentProviders.
+     *
+     * @param context The context.
+     * @param uri The Uri to query.
+     * @param selection (Optional) Filter used in the query.
+     * @param selectionArgs (Optional) Selection arguments used in the query.
+     * @return The value of the _data column, which is typically a file path.
+     */
+    public static String getDataColumn(Context context, Uri uri, String selection,
+                                       String[] selectionArgs) {
+
+        Cursor cursor = null;
+        final String column = "_data";
+        final String[] projection = {
+                column
+        };
+
+        try {
+            cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs,
+                    null);
+            if (cursor != null && cursor.moveToFirst()) {
+                final int column_index = cursor.getColumnIndexOrThrow(column);
+                return cursor.getString(column_index);
+            }
+        } finally {
+            if (cursor != null)
+                cursor.close();
+        }
+        return null;
+    }
+
+    // The following method are part from an external open source library, aFileChooser
+    /**
+     * @param uri The Uri to check.
+     * @return Whether the Uri authority is ExternalStorageProvider.
+     */
+    public static boolean isExternalStorageDocument(Uri uri) {
+        return "com.android.externalstorage.documents".equals(uri.getAuthority());
+    }
+
+    // The following method are part from an external open source library, aFileChooser
+    /**
+     * @param uri The Uri to check.
+     * @return Whether the Uri authority is DownloadsProvider.
+     */
+    public static boolean isDownloadsDocument(Uri uri) {
+        return "com.android.providers.downloads.documents".equals(uri.getAuthority());
+    }
+
+    // The following method are part from an external open source library, aFileChooser
+    /**
+     * @param uri The Uri to check.
+     * @return Whether the Uri authority is MediaProvider.
+     */
+    public static boolean isMediaDocument(Uri uri) {
+        return "com.android.providers.media.documents".equals(uri.getAuthority());
+    }
+}
 

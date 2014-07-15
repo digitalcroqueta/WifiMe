@@ -27,5 +27,4 @@
             <!-- Preview: layout=@layout/device_detail -->
         </fragment>
     </LinearLayout>
-
 </LinearLayout>

@@ -8,7 +8,7 @@
         android:title="@string/action_discover"
         android:icon="@drawable/ic_discover"
         android:orderInCategory="100"
-        android:showAsAction="ifRoom|withText" />
+        android:showAsAction="always|withText" />
 
     <item android:id="@+id/action_settings"
         android:title="@string/action_settings"
