@@ -47,7 +47,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:inputType="textPersonName"
-                android:text="Username"
+                android:hint="Username"
                 android:textColor="@color/username_menu"
                 android:ems="10"
                 android:layout_below="@+id/WifiMe"
