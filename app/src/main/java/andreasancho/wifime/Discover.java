@@ -3,6 +3,7 @@ package andreasancho.wifime;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.net.wifi.p2p.WifiP2pGroup;
 import android.os.Bundle;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -19,6 +20,9 @@ import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.util.Collection;
+import java.util.Iterator;
 
 
 /**
@@ -160,7 +164,7 @@ public class Discover  extends Activity implements ChannelListener, DeviceListFr
 
             @Override
             public void onSuccess() {
-                // WiFiDirectBroadcastReceiver will notify us. Ignore for now.
+               // WiFiDirectBroadcastReceiver will notify us. Ignore for now.
             }
 
             @Override

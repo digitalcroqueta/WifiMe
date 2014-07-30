@@ -19,18 +19,24 @@
                 android:id="@+id/btn_connect"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/connect_peer_button" />
+                android:text="@string/connect_peer_button"
+                style="@style/button_text_2"
+                android:background="@drawable/styled_button_2"/>
             <Button
                 android:id="@+id/btn_disconnect"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/disconnect_peer_button" />
+                android:text="@string/disconnect_peer_button"
+                style="@style/button_text_2"
+                android:background="@drawable/styled_button_2"/>
             <Button
                 android:id="@+id/btn_start_client"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/get_file_button"
-                android:visibility="gone" />
+                android:visibility="gone"
+                style="@style/button_text_2"
+                android:background="@drawable/styled_button_2"/>
         </LinearLayout>
         <TextView
             android:id="@+id/group_owner"

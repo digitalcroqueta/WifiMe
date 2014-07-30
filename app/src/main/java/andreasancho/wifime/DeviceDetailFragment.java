@@ -9,15 +9,19 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.ProgressDialog;
+import android.bluetooth.BluetoothClass;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.net.wifi.WpsInfo;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
+import android.net.wifi.p2p.WifiP2pGroup;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.os.AsyncTask;
@@ -43,6 +47,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * A fragment that manages a particular peer and allows interaction with device
@@ -51,15 +59,18 @@ import java.net.Socket;
 public class DeviceDetailFragment extends Fragment implements WifiP2pManager.ConnectionInfoListener {
 
     protected static final int CHOOSE_FILE_RESULT_CODE = 20;
-    public static final String IP_SERVER = "192.168.49.1";
+    public static final String IP_GO = "192.168.49.1";
+    public static final String IP_NGO = "192.168.49.162";
     public static int PORT = 8988;
     private View mContentView = null;
     private WifiP2pDevice device;
     private WifiP2pInfo info;
+    private WifiP2pGroup pGroup;
     ProgressDialog progressDialog = null;
     private static boolean send_file = false;
     private static boolean server_openned = false;
     private static int gn;
+    public static List<String> users;
 
 
     @Override
@@ -97,7 +108,8 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
                 config.deviceAddress = device.deviceAddress;
                 config.wps.setup = WpsInfo.PBC;
                 config.groupOwnerIntent = gn;
-                //Log.d(Discover.TAG, "GROUP OWNER CONFIG = " + gn);
+
+                Log.d(Discover.TAG, "GROUP OWNER CONFIG = " + gn);
 
                 if (progressDialog != null && progressDialog.isShowing()) {
                     progressDialog.dismiss();
@@ -140,9 +152,8 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
 
         String localIP = UtilsIP.getLocalIPAddress();
-        // Trick to find the ip in the file /proc/net/arp
-        String client_mac_fixed = new String(device.deviceAddress).replace("99", "19");
-        String clientIP = UtilsIP.getIPFromMac(client_mac_fixed);
+        //Log.d(Discover.TAG, "LocalIP address = " + localIP);
+
 
         // User has picked an image. Transfer it to group owner i.e peer using
         // FileTransferService.
@@ -158,10 +169,11 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
                 serviceIntent.setAction(FileTransferService.ACTION_SEND_FILE);
                 serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_PATH, dataPath);
 
-                if(localIP.equals(IP_SERVER)){
-                    serviceIntent.putExtra(FileTransferService.EXTRAS_ADDRESS, clientIP);
-                }else{
-                    serviceIntent.putExtra(FileTransferService.EXTRAS_ADDRESS, IP_SERVER);
+                //IP_SERVER is the default IP address of the group owner
+                if(send_file && localIP.equals(IP_NGO)){
+                    serviceIntent.putExtra(FileTransferService.EXTRAS_ADDRESS, IP_GO);
+                }else if(send_file && localIP.equals(IP_GO)){
+                    serviceIntent.putExtra(FileTransferService.EXTRAS_ADDRESS, IP_NGO);
                 }
                 serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT, PORT);
                 getActivity().startService(serviceIntent);
@@ -172,6 +184,23 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
         }
     }
 
+/*    @Override
+    public void onGroupInfoAvailable(final WifiP2pGroup group){
+        Log.d(Discover.TAG, ">>>>>>>>>>>>>>>>>>>>>>on Group Info Available Called");
+        Collection<WifiP2pDevice> u = group.getClientList();
+        Iterator<WifiP2pDevice> i = u.iterator();
+        if(i.hasNext()){
+            WifiP2pDevice d = i.next();
+            String s = d.deviceAddress;
+            Log.d(Discover.TAG, "Group device IP address .............= " + s);
+            String localIP = UtilsIP.getLocalIPAddress();
+            if(s!=(localIP)){
+                Log.d(Discover.TAG, "Users IP added to the list" + s);
+                users.add(s);
+            }
+        }
+    }*/
+
     @Override
     public void onConnectionInfoAvailable(final WifiP2pInfo info) {
         if (progressDialog != null && progressDialog.isShowing()) {
@@ -179,6 +208,9 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
         }
         this.info = info;
         this.getView().setVisibility(View.VISIBLE);
+
+        String localIP = UtilsIP.getLocalIPAddress();
+        Log.d(Discover.TAG, "LocalIP address .............= " + localIP);
 
         // The owner IP is now known.
         TextView view = (TextView) mContentView.findViewById(R.id.group_owner);
@@ -229,8 +261,8 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
     public void showDetails(WifiP2pDevice device) {
         this.device = device;
         this.getView().setVisibility(View.VISIBLE);
-        TextView view = (TextView) mContentView.findViewById(R.id.device_address);
-        view.setText(device.deviceAddress);
+        //TextView view = (TextView) mContentView.findViewById(R.id.device_address);
+        //view.setText(device.deviceAddress);
         //view = (TextView) mContentView.findViewById(R.id.device_info);
         //view.setText(device.toString());
 
@@ -324,10 +356,10 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
          * (non-Javadoc)
          * @see android.os.AsyncTask#onPreExecute()
          */
-        @Override
+        /*@Override
         protected void onPreExecute() {
             statusText.setText("Opening a server socket");
-        }
+        }*/
 
     }
 
