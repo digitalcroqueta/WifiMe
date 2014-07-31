@@ -60,11 +60,11 @@ public class FileTransferService extends IntentService {
             int port = intent.getExtras().getInt(EXTRAS_GROUP_OWNER_PORT);
 
             try {
-                Log.d(Discover.TAG, "Opening client socket - ");
+                //Log.d(Discover.TAG, "Opening client socket - ");
                 socket.bind(null);
                 socket.connect((new InetSocketAddress(host, port)), SOCKET_TIMEOUT);
 
-                Log.d(Discover.TAG, "Client socket - " + socket.isConnected());
+                //Log.d(Discover.TAG, "Client socket - " + socket.isConnected());
 
                 OutputStream stream = socket.getOutputStream();
                 ContentResolver cr = context.getContentResolver();
@@ -78,15 +78,15 @@ public class FileTransferService extends IntentService {
                 DataInputStream in = new DataInputStream(is);
                 BufferedOutputStream out = new BufferedOutputStream(stream);
                 DataOutputStream d = new DataOutputStream(out);
-                Log.d(Discover.TAG, "File Uri: " + fileUri);
+                //Log.d(Discover.TAG, "File Uri: " + fileUri);
                 String fileName = file.getName();
-                Log.d(Discover.TAG, "File name: " + fileName);
+                //Log.d(Discover.TAG, "File name: " + fileName);
                 String filenameArray[] = fileName.split("\\.");
-                String extension = filenameArray[filenameArray.length-1];
-                Log.d(Discover.TAG, "File type: " + extension);
+                //String extension = filenameArray[filenameArray.length-1];
+                //Log.d(Discover.TAG, "File type: " + extension);
                 d.writeUTF(fileName);
                 DeviceDetailFragment.copyFile(in, d);
-                Log.d(Discover.TAG, "Client: Data written");
+                //Log.d(Discover.TAG, "Client: Data written");
             } catch (IOException e) {
                 Log.e(Discover.TAG, e.getMessage());
             } finally {

@@ -17,43 +17,37 @@
             android:layout_height="wrap_content">
             <Button
                 android:id="@+id/btn_connect"
-                android:layout_width="wrap_content"
+                android:layout_width="fill_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/connect_peer_button"
+                android:layout_gravity="fill_horizontal|center"
                 style="@style/button_text_2"
                 android:background="@drawable/styled_button_2"/>
             <Button
-                android:id="@+id/btn_disconnect"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/disconnect_peer_button"
-                style="@style/button_text_2"
-                android:background="@drawable/styled_button_2"/>
-            <Button
-                android:id="@+id/btn_start_client"
+                android:id="@+id/btn_get_file"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/get_file_button"
                 android:visibility="gone"
                 style="@style/button_text_2"
                 android:background="@drawable/styled_button_2"/>
+            <Button
+                android:id="@+id/btn_receive_file"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/send_file_button"
+                android:visibility="gone"
+                style="@style/button_text_2"
+                android:background="@drawable/styled_button_2"/>
+            <Button
+                android:id="@+id/btn_chat"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/chat_button"
+                android:visibility="gone"
+                style="@style/button_text_2"
+                android:background="@drawable/styled_button_2"/>
         </LinearLayout>
-        <TextView
-            android:id="@+id/group_owner"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-        <TextView
-            android:id="@+id/device_address"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-        <TextView
-            android:id="@+id/device_info"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-        <TextView
-            android:id="@+id/group_ip"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
     </LinearLayout>
     <LinearLayout
         android:layout_width="match_parent"
@@ -72,4 +66,12 @@
             android:id="@+id/status_text">
         </TextView>
     </LinearLayout>
+    <Button
+        android:id="@+id/btn_disconnect"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/disconnect_button"
+        android:layout_gravity="bottom|center"
+        style="@style/button_text_2"
+        android:background="@drawable/styled_button_disconnect"/>
 </FrameLayout>

@@ -57,15 +57,17 @@ public class InitialActivity extends Activity implements View.OnClickListener {
 
     @Override
     public void onClick(View v) {
+        String message = "";
         switch (v.getId()) {
             case R.id.discover_button:
                 Intent i = new Intent(this, Discover.class);
                 EditText editText = (EditText) findViewById(R.id.editUsername);
-
-
-
-
-                String message = editText.getText().toString();
+                if(editText.getText().toString().equals("")){
+                    message = "Username";
+                }
+                else {
+                    message = editText.getText().toString();
+                }
                 i.putExtra(EXTRA_MESSAGE, message);
                 startActivity(i);
                 break;

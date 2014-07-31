@@ -12,7 +12,7 @@
     <string name="p2p_off_warning">Discover unavailable. Please enable Wifi P2P connections</string>
     <string name="connect_peer_button">Connect</string>
     <string name="disconnect_peer_button">Disconnect</string>
-    <string name="get_file_button">Get File</string>
+    <string name="get_file_button">Send File</string>
     <string name="group_owner_text">Group owner:</string>
     <string name="yes">yes</string>
     <string name="no">no</string>
@@ -20,5 +20,8 @@
     <string name="empty" />
     <string name="empty_message" />
     <string name="external_storage">Check the external storage status</string>
+    <string name="send_file_button">Receive File</string>
+    <string name="chat_button">Chat</string>
+    <string name="disconnect_button">Disconnect</string>
 
 </resources>
