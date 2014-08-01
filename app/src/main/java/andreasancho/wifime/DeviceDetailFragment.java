@@ -32,6 +32,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import org.apache.http.conn.util.InetAddressUtils;
+
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -39,8 +41,13 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Collections;
+import java.util.List;
 
 
 /**
@@ -50,8 +57,6 @@ import java.net.Socket;
 public class DeviceDetailFragment extends Fragment implements WifiP2pManager.ConnectionInfoListener {
 
     protected static final int CHOOSE_FILE_RESULT_CODE = 20;
-    public static final String IP_GO = "192.168.49.1";
-    public static final String IP_NGO = "192.168.49.162";
     public static int PORT = 8988;
     private View mContentView = null;
     private WifiP2pDevice device;
@@ -60,7 +65,7 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
     private static boolean server_openned = false;
     private static boolean connected = false;
     private static int gn;
-
+    public static String clientIP;
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -80,9 +85,6 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
                 config.deviceAddress = device.deviceAddress;
                 config.wps.setup = WpsInfo.PBC;
                 config.groupOwnerIntent = gn;
-
-                Log.d(Discover.TAG, "GROUP OWNER CONFIG = " + gn);
-
                 if (progressDialog != null && progressDialog.isShowing()) {
                     progressDialog.dismiss();
                 }
@@ -158,7 +160,21 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        String localIP = UtilsIP.getLocalIPAddress();
+
+        String localIP = getIPAddress(true);
+        Log.d(Discover.TAG, "Local IP = " + localIP);
+        String GoIP = "";
+        String nGoIP = "";
+        if(info.groupFormed) {
+            String GoInetAddress = info.groupOwnerAddress.toString();
+            GoIP = GoInetAddress.substring(GoInetAddress.indexOf("/")+1, GoInetAddress.length());
+            Log.d(Discover.TAG, "Group Owner IP = " + GoIP + " >>  Is this the group owner?: " + info.isGroupOwner);
+            if(info.isGroupOwner) {
+                if(clientIP.equals(null)) Log.d(Discover.TAG, "Client discovered IP:  NNNNUUUUULLLL");
+                nGoIP = clientIP.substring(clientIP.indexOf("/")+1, clientIP.length());
+                Log.d(Discover.TAG, "Client discovered IP: "+ nGoIP);
+            }
+        }
         // User has picked an image. Transfer it to group owner i.e peer using
         // FileTransferService.
         if (requestCode == CHOOSE_FILE_RESULT_CODE){
@@ -170,13 +186,12 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
                 serviceIntent.setAction(FileTransferService.ACTION_SEND_FILE);
                 serviceIntent.putExtra(FileTransferService.EXTRAS_FILE_PATH, dataPath);
 
-                //IP_SERVER is the default IP address of the group owner
-                if(localIP.equals(IP_NGO)){
-                    serviceIntent.putExtra(FileTransferService.EXTRAS_ADDRESS, IP_GO);
-                }else if(localIP.equals(IP_GO)){
-                    serviceIntent.putExtra(FileTransferService.EXTRAS_ADDRESS, IP_NGO);
+                if(info.isGroupOwner){
+                    serviceIntent.putExtra(FileTransferService.EXTRAS_ADDRESS, nGoIP);
+                }else {
+                    serviceIntent.putExtra(FileTransferService.EXTRAS_ADDRESS, GoIP);
                 }
-                serviceIntent.putExtra(FileTransferService.EXTRAS_GROUP_OWNER_PORT, PORT);
+                serviceIntent.putExtra(FileTransferService.EXTRAS_PORT, PORT);
                 getActivity().startService(serviceIntent);
             }
         }
@@ -192,6 +207,17 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
         }
         this.info = info;
         this.getView().setVisibility(View.VISIBLE);
+
+
+        // Now we need to retrieve al IPs in the group formed:
+        if(!connected&&info.isGroupOwner&&info.groupFormed){
+            //>>>>>>>>>>>>>>>>SERVER = Group Owner
+            new GoAsyncTask().execute();
+        }
+        else if(!connected&&info.groupFormed){
+            //>>>>>>>>>>>>>>>>>CLIENT = Connected devices except group owner
+            new NGoAsyncTask().execute();
+        }
         connected = true;
         // hide the connect button after the connection has been established
         mContentView.findViewById(R.id.btn_connect).setVisibility(View.GONE);
@@ -221,6 +247,79 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
         mContentView.findViewById(R.id.btn_receive_file).setVisibility(View.GONE);
         mContentView.findViewById(R.id.btn_chat).setVisibility(View.GONE);
         this.getView().setVisibility(View.GONE);
+    }
+
+    public static String getIPAddress(boolean useIPv4) {
+        try {
+            List<NetworkInterface> interfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
+            for (NetworkInterface intf : interfaces) {
+                List<InetAddress> addrs = Collections.list(intf.getInetAddresses());
+                for (InetAddress addr : addrs) {
+                    if (!addr.isLoopbackAddress()) {
+                        String sAddr = addr.getHostAddress().toUpperCase();
+                        boolean isIPv4 = InetAddressUtils.isIPv4Address(sAddr);
+                        if (useIPv4) {
+                            if (isIPv4)
+                                return sAddr;
+                        } else {
+                            if (!isIPv4) {
+                                int delim = sAddr.indexOf('%'); // drop ip6 port suffix
+                                return delim < 0 ? sAddr : sAddr.substring(0, delim);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        } // for now eat exceptions
+        return "";
+    }
+
+    private class GoAsyncTask extends AsyncTask<Void, Void, Void> {
+        private String information = "";
+        @Override
+        protected void onPostExecute(Void result) {
+            //Task you want to do on UIThread after completing Network operation
+            //onPostExecute is called after doInBackground finishes its task.
+            clientIP = information;
+        }
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+                ServerSocket serverSocket = null;
+                serverSocket = new ServerSocket(8989);
+                serverSocket.setReuseAddress(true);
+                // Collect client ip's
+                while(information.equals("")) {
+                    Socket clientSocket = serverSocket.accept();
+                    information = clientSocket.getInetAddress().toString();
+                    clientSocket.close();
+                }
+            }catch(IOException e){
+                e.printStackTrace();
+            }
+            return null;
+        }
+    }
+
+    private class NGoAsyncTask extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected void onPostExecute(Void result) {
+            //Task you want to do on UIThread after completing Network operation
+            //onPostExecute is called after doInBackground finishes its task.
+        }
+        @Override
+        protected Void doInBackground(Void... params) {
+            Socket socket = new Socket();
+            try {
+                socket.bind(null);
+                socket.connect((new InetSocketAddress(info.groupOwnerAddress, 8989)), 5000);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
     }
 
     /**
@@ -253,7 +352,8 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
         protected String doInBackground(Void... params) {
             try {
                 if(!cancel) {
-                    ServerSocket serverSocket = new ServerSocket(8988);
+                    ServerSocket serverSocket = null;
+                    serverSocket = new ServerSocket(8988);
                     Log.d(Discover.TAG, "Server: Socket opened");
                     Socket client = serverSocket.accept();
                     Log.d(Discover.TAG, "Server: connection done");
@@ -297,7 +397,7 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
                 Toast.makeText(context, "No files received",
                         Toast.LENGTH_SHORT).show();
             }
-            else if (result != null) {
+            else {
                 AlertDialog.Builder builder = new AlertDialog.Builder(context);
                 builder.setTitle("File Copied");
                 builder.setMessage("Path: " + result).show();

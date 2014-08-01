@@ -3,7 +3,6 @@ package andreasancho.wifime;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.net.wifi.p2p.WifiP2pGroup;
 import android.os.Bundle;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -18,11 +17,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.util.Log;
 import android.view.View;
-import android.widget.TextView;
 import android.widget.Toast;
-
-import java.util.Collection;
-import java.util.Iterator;
 
 
 /**
@@ -37,8 +32,6 @@ public class Discover  extends Activity implements ChannelListener, DeviceListFr
     private BroadcastReceiver receiver = null;
     public static String my_user_name;
     private boolean retryChannel = false;
-
-
 
     /**
      * @param isWifiP2pEnabled the isWifiP2pEnabled to set
@@ -161,10 +154,10 @@ public class Discover  extends Activity implements ChannelListener, DeviceListFr
     @Override
     public void connect(WifiP2pConfig config) {
         mManager.connect(mChannel, config, new ActionListener() {
-
             @Override
             public void onSuccess() {
-               // WiFiDirectBroadcastReceiver will notify us. Ignore for now.
+               // WiFiDirectBroadcastReceiver will notify for:
+               // a connection established and a group formed
             }
 
             @Override

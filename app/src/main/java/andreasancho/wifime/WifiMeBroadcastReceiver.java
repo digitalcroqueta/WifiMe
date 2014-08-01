@@ -68,10 +68,8 @@ public class WifiMeBroadcastReceiver extends BroadcastReceiver{
                     .getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
 
             if (networkInfo.isConnected()) {
-
                 // we are connected with the other device, request connection
                 // info to find group owner IP
-
                 DeviceDetailFragment fragment = (DeviceDetailFragment) activity
                         .getFragmentManager().findFragmentById(R.id.frag_detail);
                 mManager.requestConnectionInfo(mChannel, fragment);
@@ -82,8 +80,8 @@ public class WifiMeBroadcastReceiver extends BroadcastReceiver{
         } else if (WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION.equals(action)) {
             DeviceListFragment fragment = (DeviceListFragment) activity.getFragmentManager()
                     .findFragmentById(R.id.frag_list);
-            fragment.updateThisDevice((WifiP2pDevice) intent.getParcelableExtra(
-                    WifiP2pManager.EXTRA_WIFI_P2P_DEVICE));
+            WifiP2pDevice d =(WifiP2pDevice) intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_DEVICE);
+            fragment.updateThisDevice(d);
 
         }
     }

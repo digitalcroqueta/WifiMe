@@ -28,11 +28,11 @@ import java.net.Socket;
  */
 public class FileTransferService extends IntentService {
 
-    private static final int SOCKET_TIMEOUT = 5000;
+    private static final int SOCKET_TIMEOUT = 500000;
     public static final String ACTION_SEND_FILE = "com.andrea.wifime.SEND_FILE";
     public static final String EXTRAS_FILE_PATH = "file_url";
-    public static final String EXTRAS_ADDRESS = "go_host";
-    public static final String EXTRAS_GROUP_OWNER_PORT = "go_port";
+    public static final String EXTRAS_ADDRESS = "host";
+    public static final String EXTRAS_PORT = "port";
 
     public FileTransferService(String name) {
         super(name);
@@ -57,15 +57,14 @@ public class FileTransferService extends IntentService {
             Uri u = Uri.fromFile(file);
             String host = intent.getExtras().getString(EXTRAS_ADDRESS);
             Socket socket = new Socket();
-            int port = intent.getExtras().getInt(EXTRAS_GROUP_OWNER_PORT);
+            int port = intent.getExtras().getInt(EXTRAS_PORT);
 
             try {
-                //Log.d(Discover.TAG, "Opening client socket - ");
+
+                Log.d(Discover.TAG, "Opening client socket - " + host);
                 socket.bind(null);
                 socket.connect((new InetSocketAddress(host, port)), SOCKET_TIMEOUT);
-
-                //Log.d(Discover.TAG, "Client socket - " + socket.isConnected());
-
+                Log.d(Discover.TAG, "Client socket - " + socket.isConnected());
                 OutputStream stream = socket.getOutputStream();
                 ContentResolver cr = context.getContentResolver();
                 InputStream is = null;
@@ -73,7 +72,6 @@ public class FileTransferService extends IntentService {
                     is = cr.openInputStream(u);
                 } catch (FileNotFoundException e) {
                     Log.d(Discover.TAG, e.toString());
-                    Log.d(Discover.TAG, "problem opening cr");
                 }
                 DataInputStream in = new DataInputStream(is);
                 BufferedOutputStream out = new BufferedOutputStream(stream);
@@ -81,9 +79,6 @@ public class FileTransferService extends IntentService {
                 //Log.d(Discover.TAG, "File Uri: " + fileUri);
                 String fileName = file.getName();
                 //Log.d(Discover.TAG, "File name: " + fileName);
-                String filenameArray[] = fileName.split("\\.");
-                //String extension = filenameArray[filenameArray.length-1];
-                //Log.d(Discover.TAG, "File type: " + extension);
                 d.writeUTF(fileName);
                 DeviceDetailFragment.copyFile(in, d);
                 //Log.d(Discover.TAG, "Client: Data written");

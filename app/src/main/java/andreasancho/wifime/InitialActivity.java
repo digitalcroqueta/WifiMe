@@ -13,7 +13,6 @@ import android.widget.EditText;
  * Created by andrea on 7/7/14.
  */
 public class InitialActivity extends Activity implements View.OnClickListener {
-    public static final String TAG = "WifiMe.InitialActivity";
     public final static String EXTRA_MESSAGE = "andreasancho.wifime.MESSAGE";
 
 
@@ -80,7 +79,6 @@ public class InitialActivity extends Activity implements View.OnClickListener {
             case R.id.exit_button:
                 finish();
                 break;
-            // More buttons go here (if any) ...
         }
     }
 }
