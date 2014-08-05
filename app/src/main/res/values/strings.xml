@@ -17,11 +17,18 @@
     <string name="yes">yes</string>
     <string name="no">no</string>
     <string name="client_text">client</string>
-    <string name="empty" />
-    <string name="empty_message" />
+    <string name="empty"></string>
+    <string name="empty_message"></string>
     <string name="external_storage">Check the external storage status</string>
     <string name="send_file_button">Receive File</string>
     <string name="chat_button">Chat</string>
     <string name="disconnect_button">Disconnect</string>
+    <string name="title_activity_chat">ChatActivity</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="send">Send</string>
+    <string name="title_activity_chat_activity1">ChatActivity1</string>
+    <string name="register">Enable Chat</string>
+    <string name="discover">Search Users</string>
+    <string name="connect">Establish Connection</string>
 
 </resources>

@@ -41,6 +41,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
@@ -66,10 +67,21 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
     private static boolean connected = false;
     private static int gn;
     public static String clientIP;
+    public static String username_me = Discover.my_user_name;
+    public static String username_other;
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        username_me = Discover.my_user_name;
+    }
+
+    public static String getUsername_other(){
+        if(username_other != null){
+            return username_other;
+        }else {
+            return "username";
+        }
     }
 
     @Override
@@ -77,6 +89,7 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
 
         mContentView = inflater.inflate(R.layout.device_detail, null);
         gn = -1;
+
 
         mContentView.findViewById(R.id.btn_connect).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -152,7 +165,8 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-
+                        Intent intent = new Intent(getActivity(), NsdChatActivity.class);
+                        startActivity(intent);
                     }
                 });
         return mContentView;
@@ -231,10 +245,10 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
     /**
      * Updates the UI with device data
      *
-     * @param device the device to be displayed
+     * @param d the device to be displayed
      */
-    public void showDetails(WifiP2pDevice device) {
-        this.device = device;
+    public void showDetails(WifiP2pDevice d) {
+        this.device = d;
         this.getView().setVisibility(View.VISIBLE);
     }
 
@@ -247,33 +261,7 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
         mContentView.findViewById(R.id.btn_receive_file).setVisibility(View.GONE);
         mContentView.findViewById(R.id.btn_chat).setVisibility(View.GONE);
         this.getView().setVisibility(View.GONE);
-    }
-
-    public static String getIPAddress(boolean useIPv4) {
-        try {
-            List<NetworkInterface> interfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
-            for (NetworkInterface intf : interfaces) {
-                List<InetAddress> addrs = Collections.list(intf.getInetAddresses());
-                for (InetAddress addr : addrs) {
-                    if (!addr.isLoopbackAddress()) {
-                        String sAddr = addr.getHostAddress().toUpperCase();
-                        boolean isIPv4 = InetAddressUtils.isIPv4Address(sAddr);
-                        if (useIPv4) {
-                            if (isIPv4)
-                                return sAddr;
-                        } else {
-                            if (!isIPv4) {
-                                int delim = sAddr.indexOf('%'); // drop ip6 port suffix
-                                return delim < 0 ? sAddr : sAddr.substring(0, delim);
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        } // for now eat exceptions
-        return "";
+        this.username_other=null;
     }
 
     private class GoAsyncTask extends AsyncTask<Void, Void, Void> {
@@ -294,6 +282,14 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
                 while(information.equals("")) {
                     Socket clientSocket = serverSocket.accept();
                     information = clientSocket.getInetAddress().toString();
+                    OutputStream nGOout = clientSocket.getOutputStream();
+                    InputStream nGOin = clientSocket.getInputStream();
+                    DataOutputStream nGOd = new DataOutputStream(nGOout);
+                    nGOd.writeUTF(username_me);
+                    //Log.d(Discover.TAG, ">>>>>>>>>>GGGGO: username_me" + username_me);
+                    DataInputStream nGOdi = new DataInputStream(nGOin);
+                    username_other = nGOdi.readUTF();
+                    //Log.d(Discover.TAG, ">>>>>>>>>>GGGGGO: username_other" + username_other);
                     clientSocket.close();
                 }
             }catch(IOException e){
@@ -304,10 +300,12 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
     }
 
     private class NGoAsyncTask extends AsyncTask<Void, Void, Void> {
+
         @Override
         protected void onPostExecute(Void result) {
             //Task you want to do on UIThread after completing Network operation
             //onPostExecute is called after doInBackground finishes its task.
+
         }
         @Override
         protected Void doInBackground(Void... params) {
@@ -315,6 +313,15 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
             try {
                 socket.bind(null);
                 socket.connect((new InetSocketAddress(info.groupOwnerAddress, 8989)), 5000);
+                OutputStream nGOout = socket.getOutputStream();
+                InputStream nGOin = socket.getInputStream();
+                DataOutputStream nGOd = new DataOutputStream(nGOout);
+                //Log.d(Discover.TAG, ">>>>>>>>>>NNNNNGO: username_me: " + username_me);
+                nGOd.writeUTF(username_me);
+                DataInputStream nGOdi = new DataInputStream(nGOin);
+                username_other = nGOdi.readUTF();
+                //Log.d(Discover.TAG, ">>>>>>>>>>NNNNNGO: username_other: " + username_other);
+                socket.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -356,25 +363,25 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
                     serverSocket = new ServerSocket(8988);
                     Log.d(Discover.TAG, "Server: Socket opened");
                     Socket client = serverSocket.accept();
-                    Log.d(Discover.TAG, "Server: connection done");
+                    Log.d(Discover.TAG, "Server: connection accepted");
 
                     InputStream inputstream = client.getInputStream();
                     BufferedInputStream in = new BufferedInputStream(inputstream);
                     DataInputStream d = new DataInputStream(in);
                     String fileName = Long.toString(System.currentTimeMillis());
-                    Log.d(Discover.TAG, "FileName: " + fileName);
                     final File f = new File(Environment.getExternalStorageDirectory().toString() + "/wifime/" + fileName);
                     File dirs = new File(f.getParent());
                     if (!dirs.exists()) {
                         dirs.mkdirs();
                     }
                     f.createNewFile();
-                    Log.d(Discover.TAG, "Server: copying files " + f.toString());
+                    Log.d(Discover.TAG, "Server: copying files " + Environment.getExternalStorageDirectory().toString() + "/wifime/");
                     FileOutputStream ou = new FileOutputStream(f);
                     DataOutputStream o = new DataOutputStream(ou);
                     String newName = d.readUTF();
                     copyFile(d, o);
                     f.renameTo(new File(Environment.getExternalStorageDirectory().toString() + "/wifime/" + newName));
+                    Log.d(Discover.TAG, "FileName: " + newName);
                     serverSocket.close();
                     server_openned = false;
                     return f.getAbsolutePath();
@@ -401,6 +408,9 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
                 AlertDialog.Builder builder = new AlertDialog.Builder(context);
                 builder.setTitle("File Copied");
                 builder.setMessage("Path: " + result).show();
+                if (receiving != null && receiving.isShowing()) {
+                    receiving.dismiss();
+                }
             }
         }
 
@@ -412,6 +422,33 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
         protected void onPreExecute() {
         }
 
+    }
+
+    public static String getIPAddress(boolean useIPv4) {
+        try {
+            List<NetworkInterface> interfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
+            for (NetworkInterface intf : interfaces) {
+                List<InetAddress> addrs = Collections.list(intf.getInetAddresses());
+                for (InetAddress addr : addrs) {
+                    if (!addr.isLoopbackAddress()) {
+                        String sAddr = addr.getHostAddress().toUpperCase();
+                        boolean isIPv4 = InetAddressUtils.isIPv4Address(sAddr);
+                        if (useIPv4) {
+                            if (isIPv4)
+                                return sAddr;
+                        } else {
+                            if (!isIPv4) {
+                                int delim = sAddr.indexOf('%'); // drop ip6 port suffix
+                                return delim < 0 ? sAddr : sAddr.substring(0, delim);
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        } // for now eat exceptions
+        return "";
     }
 
     public static boolean copyFile(DataInputStream inputStream, DataOutputStream out) {
