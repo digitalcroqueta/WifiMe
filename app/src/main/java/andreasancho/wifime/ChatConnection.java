@@ -15,6 +15,7 @@ package andreasancho.wifime;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -38,19 +39,30 @@ public class ChatConnection {
     private Handler mUpdateHandler;
     private ChatServer mChatServer;
     private ChatClient mChatClient;
+    private Boolean connectionEstablished = false;
 
-    private static final String TAG = "ChatConnection";
+    private static final String TAG = "-------------WifiMe.ChatConnection";
 
     private Socket mSocket;
-    private int mPort = -1;
+    private int mPort;
+
+    public void setConnectionEstablished(Boolean connected){
+        this.connectionEstablished = connected;
+    }
+    public Boolean getConnectionEstablished(){
+        return this.connectionEstablished;
+    }
 
     public ChatConnection(Handler handler) {
         mUpdateHandler = handler;
         mChatServer = new ChatServer(handler);
+        this.mPort = -1;
     }
 
     public void tearDown() {
+        if(mChatServer!=null)
         mChatServer.tearDown();
+        if(mChatClient!=null)
         mChatClient.tearDown();
     }
 
@@ -65,11 +77,11 @@ public class ChatConnection {
     }
 
     public int getLocalPort() {
-        return mPort;
+        return this.mPort;
     }
 
     public void setLocalPort(int port) {
-        mPort = port;
+        this.mPort = port;
     }
 
 
@@ -101,7 +113,6 @@ public class ChatConnection {
                 try {
                     mSocket.close();
                 } catch (IOException e) {
-                    // TODO(alexlucas): Auto-generated catch block
                     e.printStackTrace();
                 }
             }
@@ -126,6 +137,7 @@ public class ChatConnection {
             mThread.interrupt();
             try {
                 mServerSocket.close();
+                setConnectionEstablished(false);
             } catch (IOException ioe) {
                 Log.e(TAG, "Error when closing server socket.");
             }
@@ -141,18 +153,21 @@ public class ChatConnection {
                     // used.  Just grab an available one  and advertise it via Nsd.
                     mServerSocket = new ServerSocket(0);
                     setLocalPort(mServerSocket.getLocalPort());
+                    Log.d(TAG, "Local Port: " + mServerSocket.getLocalPort());
 
                     while (!Thread.currentThread().isInterrupted()) {
-                        Log.d(TAG, "ServerSocket Created, awaiting connection");
-                        setSocket(mServerSocket.accept());
-                        Log.d(TAG, "Connected.");
-                        if (mChatClient == null) {
-                            int port = mSocket.getPort();
-                            InetAddress address = mSocket.getInetAddress();
-                            connectToServer(address, port);
-
+                        Log.d(TAG, "ServerSocket Created, awaiting connection...");
+                        if(!mServerSocket.isClosed()) {
+                            setSocket(mServerSocket.accept());
+                            Log.d(TAG, "Connected.");
+                            setConnectionEstablished(true);
+                            if (mChatClient == null) {
+                                int port = mSocket.getPort();
+                                InetAddress address = mSocket.getInetAddress();
+                                Log.d(TAG, "Address to which connect client: " + address);
+                                connectToServer(address, port);
+                            }
                         }
-
                     }
                 } catch (IOException e) {
                     Log.e(TAG, "Error creating ServerSocket: ", e);
@@ -167,7 +182,7 @@ public class ChatConnection {
         private InetAddress mAddress;
         private int PORT;
 
-        private final String CLIENT_TAG = "ChatClient";
+        private final String CLIENT_TAG = "\"-------------WifiMe.ChatConnection.ChatClient";
 
         private Thread mSendThread;
         private Thread mRecThread;
@@ -226,6 +241,7 @@ public class ChatConnection {
 
             @Override
             public void run() {
+                setConnectionEstablished(true);
 
                 BufferedReader input;
                 try {
@@ -233,7 +249,7 @@ public class ChatConnection {
                             mSocket.getInputStream()));
                     while (!Thread.currentThread().isInterrupted()) {
 
-                        String messageStr = null;
+                        String messageStr;
                         messageStr = input.readLine();
                         if (messageStr != null) {
                             Log.d(CLIENT_TAG, "Read from the stream: " + messageStr);
@@ -253,7 +269,9 @@ public class ChatConnection {
 
         public void tearDown() {
             try {
+                if(getSocket()!= null)
                 getSocket().close();
+                setConnectionEstablished(false);
             } catch (IOException ioe) {
                 Log.e(CLIENT_TAG, "Error when closing server socket.");
             }

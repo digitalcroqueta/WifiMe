@@ -30,5 +30,6 @@
     <string name="register">Enable Chat</string>
     <string name="discover">Search Users</string>
     <string name="connect">Establish Connection</string>
+    <string name="start">Start Chat Connection</string>
 
 </resources>

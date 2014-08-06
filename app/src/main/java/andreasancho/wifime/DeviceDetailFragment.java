@@ -165,7 +165,7 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        Intent intent = new Intent(getActivity(), NsdChatActivity.class);
+                        Intent intent = new Intent(getActivity(), ChatActivity.class);
                         startActivity(intent);
                     }
                 });
@@ -275,7 +275,7 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
         @Override
         protected Void doInBackground(Void... params) {
             try {
-                ServerSocket serverSocket = null;
+                ServerSocket serverSocket;
                 serverSocket = new ServerSocket(8989);
                 serverSocket.setReuseAddress(true);
                 // Collect client ip's
@@ -359,7 +359,7 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
         protected String doInBackground(Void... params) {
             try {
                 if(!cancel) {
-                    ServerSocket serverSocket = null;
+                    ServerSocket serverSocket;
                     serverSocket = new ServerSocket(8988);
                     Log.d(Discover.TAG, "Server: Socket opened");
                     Socket client = serverSocket.accept();
