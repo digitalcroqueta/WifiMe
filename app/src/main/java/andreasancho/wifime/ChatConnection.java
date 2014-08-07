@@ -16,6 +16,8 @@ package andreasancho.wifime;
  * limitations under the License.
  */
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -31,6 +33,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.Calendar;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -39,8 +42,11 @@ public class ChatConnection {
     private Handler mUpdateHandler;
     private ChatServer mChatServer;
     private ChatClient mChatClient;
+    private Context mContext;
     private Boolean connectionEstablished = false;
 
+    public static final String MyPREFERENCES = "MyPrefs" ;
+    public static final int MyPREFERENCES_MODE = Context.MODE_PRIVATE;
     private static final String TAG = "-------------WifiMe.ChatConnection";
 
     private Socket mSocket;
@@ -53,10 +59,11 @@ public class ChatConnection {
         return this.connectionEstablished;
     }
 
-    public ChatConnection(Handler handler) {
+    public ChatConnection(Handler handler, Context context) {
         mUpdateHandler = handler;
         mChatServer = new ChatServer(handler);
         this.mPort = -1;
+        this.mContext = context;
     }
 
     public void tearDown() {
@@ -87,11 +94,32 @@ public class ChatConnection {
 
     public synchronized void updateMessages(String msg, boolean local) {
         Log.e(TAG, "Updating message: " + msg);
+        String two = "";
+        SharedPreferences sharedPrefs = mContext.getSharedPreferences(MyPREFERENCES, MyPREFERENCES_MODE);
 
-        if (local) {
-            msg = "me: " + msg;
+        if (sharedPrefs.contains("other_username")){
+            two = sharedPrefs.getString("other_username", "");
+        } else if(two.equals("")){
+            two = "Other";
+        }
+
+        Calendar c = Calendar.getInstance();
+        int minutes = c.get(Calendar.MINUTE);
+        int h = c.get(Calendar.HOUR_OF_DAY);
+        int hour;
+        String am_pm;
+        if(h > 12) {
+            hour = c.get(Calendar.HOUR);
+            am_pm = "PM";
         } else {
-            msg = "them: " + msg;
+            hour = c.get(Calendar.HOUR);
+            am_pm = "AM";
+        }
+        String time = "[" + hour + ":" + minutes+ " "+ am_pm +"]";
+        if (local) {
+            msg = time + " Me:  " + msg;
+        } else {
+            msg = time + " " + two + ":  " + msg;
         }
 
         Bundle messageBundle = new Bundle();

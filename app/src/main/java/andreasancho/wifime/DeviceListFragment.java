@@ -59,7 +59,6 @@ public class DeviceListFragment extends ListFragment implements PeerListListener
             case WifiP2pDevice.INVITED:
                 return "Invited";
             case WifiP2pDevice.CONNECTED:
-
                 return "Connected";
             case WifiP2pDevice.FAILED:
                 return "Failed";
@@ -105,11 +104,7 @@ public class DeviceListFragment extends ListFragment implements PeerListListener
                 TextView bottom = (TextView) v.findViewById(R.id.device_details);
                 String stat = getDeviceStatus(device.status);
                 if (top != null) {
-                    if(stat.equals("Connected")){
-                        top.setText(DeviceDetailFragment.getUsername_other());
-                    }else {
-                        top.setText(device.deviceName);
-                    }
+                    top.setText(device.deviceName);
                 }
                 if (bottom != null) {
                     bottom.setText(stat);
@@ -130,7 +125,6 @@ public class DeviceListFragment extends ListFragment implements PeerListListener
         view1.setText(Discover.my_user_name);
         TextView view = (TextView) mContentView.findViewById(R.id.my_status);
         view.setText(getDeviceStatus(device.status));
-
     }
 
     @Override

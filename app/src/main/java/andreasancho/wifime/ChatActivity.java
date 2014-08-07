@@ -1,6 +1,7 @@
 package andreasancho.wifime;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
@@ -8,11 +9,11 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
+
 
 
 public class ChatActivity extends Activity {
@@ -47,7 +48,7 @@ public class ChatActivity extends Activity {
             }
         };
 
-        this.mConnection = new ChatConnection(mUpdateHandler);
+        this.mConnection = new ChatConnection(mUpdateHandler, getApplicationContext());
         this.mNsdManager = (NsdManager) getApplicationContext().getSystemService(Context.NSD_SERVICE);
 
         isServiceRegistered = false;
@@ -190,8 +191,25 @@ public class ChatActivity extends Activity {
         if(!isServiceFound) discoverServices();
         if(isServiceFound) mResolve();
 
-        if(mConnection.getConnectionEstablished())
+        if(mConnection.getConnectionEstablished()) {
             findViewById(R.id.start_btn).setVisibility(View.GONE);
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Chat Connection Established").show();
+
+//            Toast t = Toast.makeText(this,"Chat connection established" ,
+//                    Toast.LENGTH_SHORT);
+//            t.setGravity(Gravity.CENTER, 0, 0);
+//            t.show();
+        } else {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Chat Connection Not Established");
+            builder.setMessage("Click again in [Start Chat Connection]").show();
+//            Toast t = Toast.makeText(this, "Chat connection not yet established, click again in [Start Chat Connection]",
+//                    Toast.LENGTH_SHORT);
+//            t.setGravity(Gravity.CENTER, 0, 0);
+//            t.show();
+        }
     }
 
     public void mAdvertise() {
@@ -209,13 +227,16 @@ public class ChatActivity extends Activity {
         if (mService != null) {
             Log.d(TAG, "Connecting to: " + mService.getHost() + "  "+ mService.getPort() );
             this.mConnection.connectToServer(mService.getHost(), mService.getPort());
-            findViewById(R.id.start_btn).setVisibility(View.GONE);
         } else {
             Log.d(TAG, "No service to connect to!");
         }
     }
 
     public void clickSend(View v) {
+        InputMethodManager inputManager = (InputMethodManager)
+                getSystemService(Context.INPUT_METHOD_SERVICE);
+        inputManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(),
+                InputMethodManager.HIDE_NOT_ALWAYS);
         EditText messageView = (EditText) this.findViewById(R.id.chatInput);
         if (messageView != null) {
             String messageString = messageView.getText().toString();
@@ -224,25 +245,6 @@ public class ChatActivity extends Activity {
             }
             messageView.setText("");
         }
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.chat, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
     }
 
 

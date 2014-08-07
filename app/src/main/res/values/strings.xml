@@ -31,5 +31,7 @@
     <string name="discover">Search Users</string>
     <string name="connect">Establish Connection</string>
     <string name="start">Start Chat Connection</string>
+    <string name="author">by Andrea Sancho</string>
+    <string name="title_activity_splash">Splash</string>
 
 </resources>

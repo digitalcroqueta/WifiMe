@@ -1,7 +1,9 @@
 package andreasancho.wifime;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.Menu;
@@ -14,7 +16,9 @@ import android.widget.EditText;
  */
 public class InitialActivity extends Activity implements View.OnClickListener {
     public final static String EXTRA_MESSAGE = "andreasancho.wifime.MESSAGE";
-
+    public static final String MyPREFERENCES = "MyPrefs" ;
+    public static final int MyPREFERENCES_MODE = Context.MODE_PRIVATE;
+    public SharedPreferences mySharedPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,6 +32,16 @@ public class InitialActivity extends Activity implements View.OnClickListener {
         aboutButton.setOnClickListener(this);
         View exitButton = findViewById(R.id.exit_button);
         exitButton.setOnClickListener(this);
+        mySharedPreferences = getSharedPreferences(MyPREFERENCES, MyPREFERENCES_MODE);
+    }
+
+    protected void savePreferences(String username){
+        // Create or retrieve the shared preference object.
+        mySharedPreferences = getSharedPreferences(MyPREFERENCES, MyPREFERENCES_MODE);
+        SharedPreferences.Editor editor = mySharedPreferences.edit();
+        editor.putString("my_username", username);
+        // Commit the changes.
+        editor.commit();
     }
 
     @Override
@@ -56,7 +70,7 @@ public class InitialActivity extends Activity implements View.OnClickListener {
 
     @Override
     public void onClick(View v) {
-        String message = "";
+        String message;
         switch (v.getId()) {
             case R.id.discover_button:
                 Intent i = new Intent(this, Discover.class);
@@ -67,6 +81,7 @@ public class InitialActivity extends Activity implements View.OnClickListener {
                 else {
                     message = editText.getText().toString();
                 }
+                savePreferences(message);
                 i.putExtra(EXTRA_MESSAGE, message);
                 startActivity(i);
                 break;

@@ -13,6 +13,7 @@ import android.content.ContentUris;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.net.wifi.WpsInfo;
@@ -57,10 +58,12 @@ import java.util.List;
  */
 public class DeviceDetailFragment extends Fragment implements WifiP2pManager.ConnectionInfoListener {
 
+    public static final String MyPREFERENCES = "MyPrefs" ;
+    SharedPreferences mySharedPreferences;
     protected static final int CHOOSE_FILE_RESULT_CODE = 20;
     public static int PORT = 8988;
     private View mContentView = null;
-    private WifiP2pDevice device;
+    private static WifiP2pDevice device;
     private WifiP2pInfo info;
     ProgressDialog progressDialog = null;
     private static boolean server_openned = false;
@@ -80,7 +83,7 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
         if(username_other != null){
             return username_other;
         }else {
-            return "username";
+            return device.deviceName;
         }
     }
 
@@ -222,7 +225,6 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
         this.info = info;
         this.getView().setVisibility(View.VISIBLE);
 
-
         // Now we need to retrieve al IPs in the group formed:
         if(!connected&&info.isGroupOwner&&info.groupFormed){
             //>>>>>>>>>>>>>>>>SERVER = Group Owner
@@ -233,6 +235,14 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
             new NGoAsyncTask().execute();
         }
         connected = true;
+
+//        mySharedPreferences = getActivity().getSharedPreferences(MyPREFERENCES, getActivity().MODE_PRIVATE);
+//        SharedPreferences.Editor editor = mySharedPreferences.edit();
+//        editor.putString("other_username", username_other);
+//        //editor.putString("group_owner_IP", info.groupOwnerAddress.toString().substring(info.groupOwnerAddress.toString().indexOf("/")+1, info.groupOwnerAddress.toString().length()));
+//        // Commit the changes.
+//        editor.commit();
+
         // hide the connect button after the connection has been established
         mContentView.findViewById(R.id.btn_connect).setVisibility(View.GONE);
         // Show the options
@@ -289,6 +299,14 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
                     //Log.d(Discover.TAG, ">>>>>>>>>>GGGGO: username_me" + username_me);
                     DataInputStream nGOdi = new DataInputStream(nGOin);
                     username_other = nGOdi.readUTF();
+
+                    mySharedPreferences = getActivity().getSharedPreferences(MyPREFERENCES, getActivity().MODE_PRIVATE);
+                    SharedPreferences.Editor editor = mySharedPreferences.edit();
+                    editor.putString("other_username", username_other);
+                    //editor.putString("group_owner_IP", info.groupOwnerAddress.toString().substring(info.groupOwnerAddress.toString().indexOf("/")+1, info.groupOwnerAddress.toString().length()));
+                    // Commit the changes.
+                    editor.commit();
+
                     //Log.d(Discover.TAG, ">>>>>>>>>>GGGGGO: username_other" + username_other);
                     clientSocket.close();
                 }
@@ -320,6 +338,12 @@ public class DeviceDetailFragment extends Fragment implements WifiP2pManager.Con
                 nGOd.writeUTF(username_me);
                 DataInputStream nGOdi = new DataInputStream(nGOin);
                 username_other = nGOdi.readUTF();
+                mySharedPreferences = getActivity().getSharedPreferences(MyPREFERENCES, getActivity().MODE_PRIVATE);
+                SharedPreferences.Editor editor = mySharedPreferences.edit();
+                editor.putString("other_username", username_other);
+                //editor.putString("group_owner_IP", info.groupOwnerAddress.toString().substring(info.groupOwnerAddress.toString().indexOf("/")+1, info.groupOwnerAddress.toString().length()));
+                // Commit the changes.
+                editor.commit();
                 //Log.d(Discover.TAG, ">>>>>>>>>>NNNNNGO: username_other: " + username_other);
                 socket.close();
             } catch (IOException e) {
